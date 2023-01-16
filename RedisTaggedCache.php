@@ -17,6 +17,8 @@ class RedisTaggedCache extends TaggedCache
      */
     const REFERENCE_KEY_STANDARD = 'standard_ref';
 
+    protected const DEFAULT_TTL = 3600 * 24 * 7;
+
     /**
      * Store an item in the cache.
      *
@@ -31,7 +33,7 @@ class RedisTaggedCache extends TaggedCache
             return $this->forever($key, $value);
         }
 
-        $this->pushStandardKeys($this->tags->getNamespace(), $key);
+        $this->pushStandardKeys($this->tags->getNamespace(), $key, $ttl);
 
         return parent::put($key, $value, $ttl);
     }
@@ -96,11 +98,12 @@ class RedisTaggedCache extends TaggedCache
      *
      * @param  string  $namespace
      * @param  string  $key
+     * @param int|null $ttl
      * @return void
      */
-    protected function pushStandardKeys($namespace, $key)
+    protected function pushStandardKeys($namespace, $key, $ttl = null)
     {
-        $this->pushKeys($namespace, $key, self::REFERENCE_KEY_STANDARD);
+        $this->pushKeys($namespace, $key, self::REFERENCE_KEY_STANDARD, $ttl);
     }
 
     /**
@@ -118,17 +121,19 @@ class RedisTaggedCache extends TaggedCache
     /**
      * Store a reference to the cache key against the reference key.
      *
-     * @param  string  $namespace
-     * @param  string  $key
-     * @param  string  $reference
+     * @param string $namespace
+     * @param string $key
+     * @param string $reference
+     * @param int|null $ttl
      * @return void
      */
-    protected function pushKeys($namespace, $key, $reference)
+    protected function pushKeys($namespace, $key, $reference, $ttl = null): void
     {
         $fullKey = $this->store->getPrefix().sha1($namespace).':'.$key;
 
         foreach (explode('|', $namespace) as $segment) {
             $this->store->connection()->sadd($this->referenceKey($segment, $reference), $fullKey);
+            $this->store->connection()->expire($this->referenceKey($segment, $reference), $ttl ?? self::DEFAULT_TTL);
         }
     }
 
