@@ -187,7 +187,7 @@ class Repository implements CacheContract, ArrayAccess
     /**
      * Store an item in the cache.
      *
-     * @param  string  $key
+     * @param  string|array  $key
      * @param  mixed  $value
      * @param  \DateTimeInterface|\DateInterval|int|null  $ttl
      * @return bool
@@ -195,7 +195,7 @@ class Repository implements CacheContract, ArrayAccess
     public function put($key, $value, $ttl = null)
     {
         if (is_array($key)) {
-            return $this->putMany($key, $value);
+            return $this->putMany($key, $ttl);
         }
 
         if ($ttl === null) {

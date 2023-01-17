@@ -135,6 +135,10 @@ class RedisTaggedCache extends TaggedCache
             $this->store->connection()->sadd($this->referenceKey($segment, $reference), $fullKey);
             $this->store->connection()->expire($this->referenceKey($segment, $reference), $ttl ?? self::DEFAULT_TTL);
         }
+
+        foreach ($this->tags->getNames() as $name) {
+            $this->store->connection()->expire($this->store->getPrefix() . $this->tags->tagKey($name), $ttl ?? self::DEFAULT_TTL);
+        }
     }
 
     /**
